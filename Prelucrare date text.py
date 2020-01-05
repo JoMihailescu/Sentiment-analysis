@@ -2,7 +2,7 @@
 """
 Created on Sun Dec 15 19:54:12 2019
 
-@author: Ioana Mihailescu
+@author: Ioana Mihailescu & Roman Izabela
 """
 
 import pandas as pd
@@ -32,11 +32,14 @@ nltk.download('stopwords')
 from nltk import pos_tag
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+import re
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
 
 def clean_text(text):
     #lower text
     text = text.lower()
-    # tokenize text and remove puncutation
+    # tokenize text and remove punctuation
     text = [word.strip(string.punctuation) for word in text.split(" ")]
     # remove words that contain numbers
     text = [word for word in text if not any(c.isdigit() for c in word)]
@@ -49,6 +52,8 @@ def clean_text(text):
     pos_tags = pos_tag(text)
     # lemmatize text
     text = [WordNetLemmatizer().lemmatize(t[0], get_wordnet_pos(t[1])) for t in pos_tags]
+    #remove special characters
+    text = [re.sub('\W+',' ', word ) for word in text]
     # remove words with only one letter
     text = [t for t in text if len(t) > 1]
     # join all
@@ -110,10 +115,11 @@ text_counts= cv.fit_transform(reviews['Review_clean'])
 #Split train and test set
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(
-    text_counts, reviews['label'], test_size=0.3, random_state=1)
+    text_counts, reviews['label'], test_size=0.25, random_state=1)
 
 
-#Model Building and Evaluation
+#Naive Bayes
+
 from sklearn.naive_bayes import MultinomialNB
 #Import scikit-learn metrics module for accuracy calculation
 from sklearn import metrics
@@ -121,6 +127,41 @@ from sklearn import metrics
 clf = MultinomialNB().fit(X_train, y_train)
 predicted= clf.predict(X_test)
 print("MultinomialNB Accuracy:",metrics.accuracy_score(y_test, predicted))
+
+# regresia logistica
+
+from sklearn.linear_model import LogisticRegression
+lr = LogisticRegression(multi_class='ovr',solver='lbfgs')
+model = lr.fit(X_train, y_train)
+
+accuracy = model.score(X_test, y_test)
+print ("RL Accuracy is {}".format(accuracy))
+
+# random forest
+
+# Fitting classifier to the Training set
+from sklearn.ensemble import RandomForestClassifier as rfc
+classifier = rfc()
+classifier.fit(X_train,y_train)
+print("RF Accuracy:",classifier.score(X_test,y_test))
+
+# decision tree
+
+from sklearn.tree import DecisionTreeClassifier
+dct = DecisionTreeClassifier(criterion='entropy', random_state=1)
+model1 = dct.fit(X_train,y_train)
+print("DT Accuracy:",dct.score(X_test,y_test))
+
+
+#testare comentariu nou cu modelul de regresie logistica
+test = "The Deep is a fantasy novel about the descendants of African slave women thrown overboard into the sea by slave owners. Pregnant women were thrown overboard for being sick and disruptive cargo, but what would have happened if their babies adapted to the new environment and survived anyways? The zoti are the answer to this what if.They are born from the bodies of women thrown overboard, but rather than having legs they have tails and can breathe underwater. They do not remember where they."
+import numpy as np
+x = cv.transform(np.array([test]))
+proba = model.predict_proba(x)
+classes = model.classes_
+resultdf = pd.DataFrame(data=proba, columns=classes)
+resultdf
+
 
 #exportarea bazei de date ce va fi utilizata mai departe pentru analize
 reviews.to_excel('Goodreads_review.xlsx', index=False)
