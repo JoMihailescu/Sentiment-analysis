@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Dec 15 19:54:12 2019
+Created on Sun Jan  5 18:16:19 2020
 
-@author: Ioana Mihailescu & Roman Izabela
+@author: Izabela Roman
 """
 
 import pandas as pd
@@ -78,13 +78,18 @@ reviews['label'] = 0
 reviews.loc[reviews['compound'] > 0.2, 'label'] = 1
 reviews.loc[reviews['compound'] < -0.2, 'label'] = -1
 reviews.head()
-
+#Analiza descriptivă pentru scorurile comentariilor 
+reviews['compound'].describe()
 
 #create columns Word Count, Special Char Count
 reviews['Word Count'] = [len(review.split()) for review in reviews['Review_clean']]
-                         
-reviews['Special Char Count'] = [sum(char in string.punctuation for char in review) \
-                            for review in reviews['Review_clean']] 
+
+#analiza descriptiva numar cuvinte                         
+reviews['Word Count'].describe()
+
+#numarul total de cuvinte procesate
+Total = reviews['Word Count'].sum()
+print (Total)
 
 #Now let's check how many total positives and negatives we have in this dataset:
 print(reviews.label.value_counts())
@@ -111,6 +116,8 @@ from nltk.tokenize import RegexpTokenizer
 token = RegexpTokenizer(r'[a-zA-Z0-9]+')
 cv = CountVectorizer(lowercase=True,stop_words='english',ngram_range = (1,1),tokenizer = token.tokenize)
 text_counts= cv.fit_transform(reviews['Review_clean'])
+
+
 
 #Split train and test set
 from sklearn.model_selection import train_test_split
@@ -154,14 +161,13 @@ print("DT Accuracy:",dct.score(X_test,y_test))
 
 
 #testare comentariu nou cu modelul de regresie logistica
-test = "The Deep is a fantasy novel about the descendants of African slave women thrown overboard into the sea by slave owners. Pregnant women were thrown overboard for being sick and disruptive cargo, but what would have happened if their babies adapted to the new environment and survived anyways? The zoti are the answer to this what if.They are born from the bodies of women thrown overboard, but rather than having legs they have tails and can breathe underwater. They do not remember where they."
+test = "I was really excited for this book and it just really fell flat for me. The big mystery was so incredibly obvious and so it was annoying to watch Sigourney make the wrong choices. I really struggled at the beginning of this book with all the islands and how everything related to one another. Part of the issue is all the island names sound so similar because it's literally (Name) Helle. It's not immediately obvious that they're named after the family that runs the island. So I kept reading about "
 import numpy as np
 x = cv.transform(np.array([test]))
 proba = model.predict_proba(x)
-classes = model.classes_
+classes=model.classes_
 resultdf = pd.DataFrame(data=proba, columns=classes)
-resultdf
-
+print("Comentariul va fi incadrat in urmatoarea categorie",resultdf)
 
 #exportarea bazei de date ce va fi utilizata mai departe pentru analize
 reviews.to_excel('Goodreads_review.xlsx', index=False)
